@@ -1,0 +1,17 @@
+# Strict whitelist: only assets/, css/, js/, index.html, favicon.ico,
+# rat-on-a-stick.html, and this .gitignore itself are tracked. Everything
+# else at the repo root is ignored.
+/*
+!/.gitignore
+!/assets
+!/css
+!/js
+!/index.html
+!/favicon.ico
+!/rat-on-a-stick.html
+
+# Editor / OS artifacts anywhere in the tree.
+*.swp
+*.kate-swp
+.DS_Store
+Thumbs.db

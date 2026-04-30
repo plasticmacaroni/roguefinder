@@ -533,6 +533,28 @@
   color: var(--fg-muted);
   font-style: normal;
 }
+.detail-choices__resolved {
+  color: var(--fg);
+  font-weight: 600;
+}
+.detail-choices__edit {
+  appearance: none;
+  background: transparent;
+  color: var(--rarity-rare);
+  border: 1px solid color-mix(in oklab, var(--rarity-rare) 50%, var(--bg-3));
+  border-radius: 6px;
+  padding: 0 var(--space-2);
+  font: 500 0.75rem/1.4 var(--font-sans);
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease),
+              color var(--motion-fast) var(--ease);
+}
+.detail-choices__edit:hover,
+.detail-choices__edit:focus-visible {
+  background: color-mix(in oklab, var(--rarity-rare) 20%, transparent);
+  color: var(--fg);
+  outline: none;
+}
 
 /* Read-only "Auto-applies" projection on cards. Pills + bucket groups
    render via the shared Free-Feats renderer (renderPill / renderTypeGroup),
@@ -607,6 +629,47 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
   gap: var(--space-3);
+}
+.picks-cascade-freetext {
+  max-width: 50rem;
+  margin: 0 auto var(--space-8);
+  padding: 0 var(--space-4);
+  display: flex;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+.picks-cascade-freetext__input {
+  flex: 1;
+  background: var(--bg-1);
+  color: var(--fg);
+  border: 2px solid var(--bg-3);
+  border-radius: 10px;
+  padding: var(--space-3) var(--space-4);
+  font: 500 1rem/1.2 var(--font-sans);
+  outline: none;
+  transition: border-color var(--motion-fast) var(--ease),
+              box-shadow var(--motion-fast) var(--ease);
+}
+.picks-cascade-freetext__input:focus-visible {
+  border-color: var(--rarity-rare);
+  box-shadow: 0 0 0 3px var(--rarity-rare-glow);
+}
+.picks-cascade-freetext__input::placeholder { color: var(--fg-dim); }
+.picks-cascade-freetext__submit {
+  background: var(--rarity-rare);
+  color: #0c0a14;
+  border: 2px solid var(--rarity-rare);
+  border-radius: 10px;
+  padding: var(--space-3) var(--space-5);
+  font: 600 0.95rem/1 var(--font-sans);
+  cursor: pointer;
+  transition: filter var(--motion-fast) var(--ease);
+}
+.picks-cascade-freetext__submit:hover,
+.picks-cascade-freetext__submit:focus-visible {
+  filter: brightness(1.1);
+  outline: none;
+  box-shadow: 0 0 18px var(--rarity-rare-glow);
 }
 .picks-cascade-option {
   display: flex;

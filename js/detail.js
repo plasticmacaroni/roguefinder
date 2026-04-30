@@ -370,22 +370,66 @@ function renderAutoAppliesInfo(feat) {
 }
 
 // Read-only display of a feat's Foundry ChoiceSet rules. Each choice
-// renders as a list item: prompt, then a comma-joined preview of options
-// (capped). For feat-yielding choices that have many options, shows
-// "(N choices)" suffix instead of dumping the full list. Returns null
-// when the feat has no choices.
+// renders as a list item: prompt, then either the resolved value (with
+// an inline [edit] affordance) or a preview of available options.
+// Returns null when the feat has no choices.
 function renderChoicesInfo(feat) {
   const choices = feat?.choices ?? [];
   if (choices.length === 0) return null;
   const tr = data?.translate || ((k) => k);
+  const featPicks = store.picks?.get?.(feat.id);
+  const cs = featPicks?.choiceSets ?? {};
+
   const items = choices.map((choice) => {
     const promptText = tr(choice.prompt) || "Choose one";
     const opts = choice.options ?? [];
+    const resolvedValue = cs[choice.id];
+
+    // Resolved → show the chosen value + [edit] button. Editing clears
+    // the pick and re-invokes the cascade so the user can re-select
+    // (works for freetext and option-list picks alike).
+    if (resolvedValue) {
+      let resolvedLabel;
+      if (choice.kind === "freetext") {
+        resolvedLabel = choice.labelPrefix ? `${choice.labelPrefix} (${resolvedValue})` : String(resolvedValue);
+      } else {
+        const opt = opts.find((o) => o.value === resolvedValue);
+        resolvedLabel = opt ? (tr(opt.label) || opt.value) : String(resolvedValue);
+      }
+      const editBtn = el(
+        "button",
+        {
+          class: "detail-choices__edit",
+          type: "button",
+          title: "Clear and re-pick",
+          onclick: (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setPick(feat.id, "choiceSet", { id: choice.id, value: null });
+            // Cascade re-fires the just-cleared pick. setTimeout 0 lets
+            // the click event finish first so the modal stack is clean.
+            if (data) setTimeout(() => checkAndCascade(data), 0);
+          },
+        },
+        "edit",
+      );
+      return el(
+        "li",
+        { class: "detail-choices__item" },
+        el("strong", { class: "detail-choices__prompt" }, promptText + ": "),
+        el("span", { class: "detail-choices__resolved" }, resolvedLabel),
+        " ",
+        editBtn,
+      );
+    }
+
+    // Unresolved — preview available options (existing behavior).
     let optsLine;
-    if (opts.length === 0) {
+    if (choice.kind === "freetext") {
+      optsLine = el("em", {}, "type your own value");
+    } else if (opts.length === 0) {
       optsLine = el("em", {}, "no options available");
     } else if (opts.some((o) => o.yieldsFeat) && opts.length > 8) {
-      // Big feat lists — summarize.
       optsLine = el("span", { class: "detail-choices__summary" },
         `${opts.length} feats — picked via the choice menu`);
     } else {

@@ -11,9 +11,10 @@
 // Option buttons live in the footer; clicking one resolves and advances.
 
 import { el, clearChildren } from "./util/dom.js";
-import { store, setPick, KNOWN_CLASSES, computeAutoBuildFor } from "./state.js";
+import { store, setPick, KNOWN_CLASSES, computeAutoBuildFor, deriveRolloptions } from "./state.js";
 import { renderFeatTitle, renderFeatBody } from "./detail.js";
 import { startChoiceMusic, stopChoiceMusic } from "./audio.js";
+import { evalPredicate } from "./predicate.js";
 
 // Detect every feat in `build` whose pickers haven't been resolved.
 // Returns [{ featId, kind: "class"|"or", options: Array<{slug, name, level, rarity, label}> }]
@@ -27,6 +28,13 @@ export function findUnresolvedPicks(build, picks, autoBuild, byId) {
     const ids = autoBuild instanceof Map ? autoBuild.keys() : autoBuild;
     for (const id of ids) owned.add(id);
   }
+  // Foundry tags class-only ChoiceSets with `predicate: ["class:X"]` etc.
+  // We default class membership / actor state to false (archetype-only
+  // mode), so any choice gated by a predicate we can't satisfy gets
+  // suppressed. Resolved picks DO contribute rolloptions, so within-feat
+  // chained predicates (e.g. fire-gate impulseTwo gating on the gate
+  // pick) still evaluate naturally for the archetype path.
+  const rolloptions = deriveRolloptions(picks, byId);
   // Scan build AND autoBuild — feats pulled in via picks.choiceSets land
   // in autoBuild; if they have their own ChoiceSets we still need to
   // surface them. This is what makes recursive chained picking work
@@ -98,8 +106,14 @@ export function findUnresolvedPicks(build, picks, autoBuild, byId) {
     const cs = featPicks.choiceSets ?? {};
     for (const choice of choices) {
       if (cs[choice.id]) continue; // resolved
+      // Foundry-encoded gating: skip choices whose predicate isn't
+      // satisfied by the current rolloption set (e.g. `class:kineticist`
+      // is never satisfied → fire-gate's impulseOne stays suppressed).
+      if (choice.predicate && !evalPredicate(choice.predicate, rolloptions)) continue;
       const opts = choice.options ?? [];
-      if (opts.length === 0) continue; // nothing to pick
+      // Freetext picks have no pre-baked options — they're surfaced
+      // unconditionally and resolved via a text-input modal.
+      if (choice.kind !== "freetext" && opts.length === 0) continue;
       // Skip when the user already owns one of the feat-yielding options
       // (treat as de-facto resolved — same convention as the class/or paths).
       const alreadyOwned = opts.some(
@@ -247,6 +261,45 @@ function renderChoiceOptions(item, byId, tr, onAfterPick) {
     setPick(featId, "choiceSet", { id: choice.id, value });
     onAfterPick();
   };
+
+  // Free-text picks: Foundry models some choices (Lore subcategories,
+  // etc.) via free actor input rather than rule data, surfaced in our
+  // app via tools/choice-overrides.json. Render a small text field +
+  // submit button. Empty submits are blocked. Existing value preloads
+  // so the same UI doubles as an "edit my pick" affordance.
+  if (choice.kind === "freetext") {
+    const existing = item.currentValue ?? "";
+    const input = el("input", {
+      class: "picks-cascade-freetext__input",
+      type: "text",
+      placeholder: "e.g. Cooking, Astronomy, Underworld…",
+      value: existing,
+      autocomplete: "off",
+      spellcheck: "false",
+      maxlength: "60",
+    });
+    const submit = el(
+      "button",
+      { class: "picks-cascade-freetext__submit", type: "button" },
+      "Save",
+    );
+    const trySubmit = () => {
+      const v = input.value.trim();
+      if (!v) { input.focus(); return; }
+      commit(v);
+    };
+    submit.addEventListener("click", trySubmit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); trySubmit(); }
+    });
+    setTimeout(() => input.focus(), 0);
+    return el(
+      "div",
+      { class: "picks-cascade-freetext" },
+      input,
+      submit,
+    );
+  }
 
   if (opts.some((o) => o.yieldsFeat)) {
     // Feat-yielding choice — render each option as a clickable feat card.

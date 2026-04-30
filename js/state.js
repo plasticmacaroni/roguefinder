@@ -1,6 +1,7 @@
 import { createStore } from "./store.js";
 import { requirementsSatisfied } from "./selectors.js";
 import { loadBuild, loadFilters, loadQuery, loadPicks } from "./persist.js";
+import { evalPredicate } from "./predicate.js";
 
 // Boot from localStorage. Defaults: empty build, empty filters (= show
 // everything), empty query, empty picks.
@@ -137,6 +138,11 @@ export function computeAutoBuildFor(
 ) {
   const out = new Map();
   if (!byId) return out;
+  // Foundry GrantItem rules sometimes carry their own predicates (e.g.
+  // earth-gate grants Hefty Hauler only when junction:earth:skill is set;
+  // impulses grants Base Kinesis only for class:kineticist). Pre-compute
+  // the runtime rolloption set once so the walker can gate grants below.
+  const rolloptions = deriveRolloptions(picks, byId);
   const sourceOf = new Map();
   const stack = [];
   for (const seed of build) {
@@ -172,6 +178,12 @@ export function computeAutoBuildFor(
         for (const choice of item.choices) {
           const value = featPicks.choiceSets[choice.id];
           if (!value) continue;
+          // Only pull when the parent feat actually grants the picked
+          // value (its rules carry a sibling GrantItem consuming this
+          // flag). Otherwise the ChoiceSet is informational — e.g.
+          // bard-dedication picks a muse but doesn't grant it; pulling
+          // would over-apply the muse's own composition feat.
+          if (!choice.grantsResult) continue;
           const opt = choice.options?.find((o) => o.value === value);
           if (opt && opt.yieldsFeat) tryAdd(value, sourceId);
         }
@@ -180,8 +192,15 @@ export function computeAutoBuildFor(
     // (a) literal prereq slugs. `requires.all` is mandatory; `requires.any`
     // is user choice — recorded in `picks[id].or` and processed above.
     for (const r of item.requires?.all ?? []) tryAdd(r, sourceId);
-    // (b) Foundry GrantItem grants
-    for (const g of item.grants ?? []) tryAdd(g, sourceId);
+    // (b) Foundry GrantItem grants — each grant may carry a `predicate`
+    // gating its application (full-class only, junction-only, etc.).
+    // String-shaped entries are pre-fix back-compat (no predicate).
+    for (const g of item.grants ?? []) {
+      const slug = typeof g === "string" ? g : g.slug;
+      const pred = typeof g === "string" ? null : g.predicate;
+      if (pred && !evalPredicate(pred, rolloptions)) continue;
+      tryAdd(slug, sourceId);
+    }
     // (c) class-trait → dedication. When a classfeature lands in the walk,
     // also auto-pull its archetype dedication so the chain reads end-to-end.
     // Single class trait → auto-pull. Multi class trait → defer to user
@@ -278,6 +297,37 @@ export function ownedSet(build = store.build, autoBuild = store.autoBuild) {
   if (autoBuild) {
     const ids = autoBuild instanceof Map ? autoBuild.keys() : autoBuild;
     for (const id of ids) out.add(id);
+  }
+  return out;
+}
+
+// Build the runtime rolloption set Foundry's ChoiceSet predicates evaluate
+// against. We only synthesize rolloptions from resolved picks — class
+// membership, actor stats, and other unmodelable signals stay unset, so
+// any predicate referencing them fails (conservative-fail = archetype-only
+// behavior, the current scope).
+//
+// For each resolved pick `picks[featId].choiceSets[choiceId] = value`, the
+// parent feat's matching `feat.choices[i]` carries `flag` and/or
+// `rollOption` fields lifted from the original Foundry rule. Both forms
+// emit `<key>:<value>` literals so downstream choices' predicates can
+// match either flag-shaped (`elementOne:fire-gate`) or rollOption-shaped
+// (`kinetic-gate:first-element:fire-gate`) references.
+export function deriveRolloptions(picks = store.picks, byId = _data?.byId) {
+  const out = new Set();
+  if (!picks || !byId) return out;
+  for (const [featId, featPicks] of picks) {
+    const cs = featPicks?.choiceSets;
+    if (!cs) continue;
+    const feat = byId.get(featId);
+    if (!feat || !Array.isArray(feat.choices)) continue;
+    for (const [choiceId, value] of Object.entries(cs)) {
+      if (!value) continue;
+      const choice = feat.choices.find((c) => c.id === choiceId);
+      if (!choice) continue;
+      if (choice.rollOption) out.add(`${choice.rollOption}:${value}`);
+      if (choice.flag)       out.add(`${choice.flag}:${value}`);
+    }
   }
   return out;
 }

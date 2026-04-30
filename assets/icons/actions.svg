@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Self-drawn PF2e action-cost glyphs. NOT derived from Paizo fonts (trademark).
+  Use via <svg class="action-glyph"><use href="./assets/icons/actions.svg#a-2" /></svg>.
+  All glyphs sized to a 24x24 viewbox; render at any em-relative size.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- 1 action: filled diamond -->
+  <symbol id="a-1" viewBox="0 0 24 24">
+    <path d="M12 2 L22 12 L12 22 L2 12 Z" />
+  </symbol>
+  <!-- 2 actions: two stacked diamonds -->
+  <symbol id="a-2" viewBox="0 0 48 24">
+    <path d="M12 2 L22 12 L12 22 L2 12 Z M36 2 L46 12 L36 22 L26 12 Z" />
+  </symbol>
+  <!-- 3 actions: three stacked diamonds -->
+  <symbol id="a-3" viewBox="0 0 72 24">
+    <path d="M12 2 L22 12 L12 22 L2 12 Z M36 2 L46 12 L36 22 L26 12 Z M60 2 L70 12 L60 22 L50 12 Z" />
+  </symbol>
+  <!-- Reaction: arrow looping back -->
+  <symbol id="a-r" viewBox="0 0 24 24">
+    <path d="M5 11 a7 7 0 1 1 7 7 v3 l-4-4 4-4 v3 a3 3 0 1 0 -3 -3 Z" />
+  </symbol>
+  <!-- Free action: open ring -->
+  <symbol id="a-f" viewBox="0 0 24 24">
+    <path d="M12 2 a10 10 0 1 1 0 20 a10 10 0 1 1 0 -20 Z M12 6 a6 6 0 1 0 0 12 a6 6 0 1 0 0 -12 Z" fill-rule="evenodd" />
+  </symbol>
+  <!-- Passive: small dash (used for non-action feats) -->
+  <symbol id="a-p" viewBox="0 0 24 24">
+    <rect x="4" y="10" width="16" height="4" rx="2" />
+  </symbol>
+  <!-- Varies: question mark or three dots -->
+  <symbol id="a-v" viewBox="0 0 24 24">
+    <circle cx="5"  cy="12" r="2.5" />
+    <circle cx="12" cy="12" r="2.5" />
+    <circle cx="19" cy="12" r="2.5" />
+  </symbol>
+</svg>

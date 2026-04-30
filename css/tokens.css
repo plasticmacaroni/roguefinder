@@ -1,0 +1,72 @@
+/* Design tokens. Modify here, ripple everywhere. */
+
+:root {
+  color-scheme: dark;
+
+  /* Surface */
+  --bg-0: #0a0910;            /* page bg */
+  --bg-1: #14131c;            /* card / pill bg */
+  --bg-2: #1f1d2b;            /* hover / pressed */
+  --bg-3: #2a2839;            /* divider / inset */
+  --fg:   #ece9f5;
+  --fg-muted: #8a849a;
+  --fg-dim: #5b566c;
+
+  /* Rarity (canonical PF2e community palette).
+     Border + glow only — never fill. */
+  --rarity-common:    #8a849a;
+  --rarity-uncommon:  #2e8b57;   /* Paizo "Uncommon" green */
+  --rarity-rare:      #4169e1;   /* royal blue */
+  --rarity-unique:    #9370db;   /* medium purple */
+
+  --rarity-common-glow:   color-mix(in oklab, var(--rarity-common)   30%, transparent);
+  --rarity-uncommon-glow: color-mix(in oklab, var(--rarity-uncommon) 35%, transparent);
+  --rarity-rare-glow:     color-mix(in oklab, var(--rarity-rare)     45%, transparent);
+  --rarity-unique-glow:   color-mix(in oklab, var(--rarity-unique)   50%, transparent);
+
+  /* Type accents (subtle, used for section headers). */
+  --type-class:        #c79a4a;
+  --type-ancestry:     #6fa3a3;
+  --type-archetype:    #b07ac9;
+  --type-general:      #7a8c9b;
+  --type-skill:        #6fa86a;
+  --type-mythic:       #d3a83c;
+  --type-misc:         #8a849a;
+
+  /* Spacing scale (8-pt). */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Radii. */
+  --radius-pill: 999px;
+  --radius-card: 0.75rem;
+
+  /* Type. */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+
+  /* Motion. */
+  --motion-fast: 120ms;
+  --motion: 200ms;
+  --motion-slow: 320ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* Z-index ladder. */
+  --z-pill: 1;
+  --z-popover: 5;
+  --z-dialog: 10;
+  --z-toast: 20;
+}
+
+/* Reduce motion: clamp transitions/animations. Respect the platform. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion: 0ms;
+    --motion-slow: 0ms;
+  }
+}

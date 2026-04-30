@@ -1,0 +1,82 @@
+/* main.css — layout, page chrome, and the cascade-layer skeleton.
+   Tokens and components live in tokens.css and components.css. */
+
+@layer reset, base, components, utilities;
+
+@import url("./tokens.css") layer(base);
+@import url("./components.css") layer(components);
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  button { font: inherit; }
+}
+
+@layer base {
+  body {
+    background:
+      radial-gradient(circle at 20% -10%, color-mix(in oklab, var(--rarity-rare) 6%, transparent), transparent 50%),
+      radial-gradient(circle at 80% -20%, color-mix(in oklab, var(--rarity-unique) 5%, transparent), transparent 60%),
+      var(--bg-0);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+}
+
+@layer components {
+  .app-header {
+    padding: var(--space-6) var(--space-4) var(--space-4);
+    text-align: center;
+  }
+  .app-header__title {
+    margin: 0;
+    line-height: 0;
+  }
+  .app-header__logo {
+    display: inline-block;
+    width: auto;
+    height: auto;
+    max-width: min(56ch, 92vw);
+    max-height: clamp(4rem, 12vw, 8rem);
+    object-fit: contain;
+    /* Mirror the previous text glow so the logo sits on the same rare-blue
+       halo as the rest of the page. */
+    filter:
+      drop-shadow(0 0 14px color-mix(in oklab, var(--rarity-rare) 45%, transparent))
+      drop-shadow(0 1px 0 rgba(0, 0, 0, 0.5));
+  }
+  .app-header__title::after {
+    content: "";
+    display: block;
+    width: 4rem;
+    height: 2px;
+    margin: 0.5rem auto 0;
+    background: linear-gradient(90deg, transparent, var(--rarity-rare), transparent);
+    opacity: 0.7;
+  }
+  .tagline {
+    margin: var(--space-1) 0 0;
+    color: var(--fg-muted);
+    font-size: 0.95rem;
+  }
+
+  .app-footer {
+    margin: var(--space-8) var(--space-4) var(--space-4);
+    color: var(--fg-muted);
+    font-size: 0.8rem;
+    text-align: center;
+    max-width: 80ch;
+    margin-inline: auto;
+  }
+  .app-footer p { margin: var(--space-2) 0; }
+  .app-footer a {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--fg-dim);
+  }
+  .app-footer a:hover { text-decoration-color: var(--rarity-rare); }
+}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RogueFinder — PF2e Roguelite Feat Picker</title>
+    <meta
+      name="description"
+      content="A Pathfinder 2e feat picker with a roguelite slot-machine roller. Pick one of three random feats, build your character."
+    />
+    <link rel="stylesheet" href="./css/main.css" />
+    <script
+      id="feats-data"
+      type="application/json"
+      data-src="./assets/feats.9f1b6d2d.json"
+    ></script>
+    <script
+      id="class-features-data"
+      type="application/json"
+      data-src="./assets/class-features.e22a342c.json"
+    ></script>
+    <script
+      id="ancestries-data"
+      type="application/json"
+      data-src="./assets/ancestries.b1d7e787.json"
+    ></script>
+    <script
+      id="i18n-data"
+      type="application/json"
+      data-src="./assets/i18n.0df830d0.json"
+    ></script>
+    <script type="module" src="./js/main.js"></script>
+  </head>
+  <body>
+    <!-- Inline action-glyph sprite (loaded once, referenced via <use>). -->
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      style="position: absolute; width: 0; height: 0; overflow: hidden"
+      aria-hidden="true"
+    >
+      <symbol id="a-1" viewBox="0 0 24 24"><path d="M12 2 L22 12 L12 22 L2 12 Z" /></symbol>
+      <symbol id="a-2" viewBox="0 0 48 24"><path d="M12 2 L22 12 L12 22 L2 12 Z M36 2 L46 12 L36 22 L26 12 Z" /></symbol>
+      <symbol id="a-3" viewBox="0 0 72 24"><path d="M12 2 L22 12 L12 22 L2 12 Z M36 2 L46 12 L36 22 L26 12 Z M60 2 L70 12 L60 22 L50 12 Z" /></symbol>
+      <symbol id="a-r" viewBox="0 0 24 24"><path d="M5 11 a7 7 0 1 1 7 7 v3 l-4-4 4-4 v3 a3 3 0 1 0 -3 -3 Z" /></symbol>
+      <symbol id="a-f" viewBox="0 0 24 24"><path d="M12 2 a10 10 0 1 1 0 20 a10 10 0 1 1 0 -20 Z M12 6 a6 6 0 1 0 0 12 a6 6 0 1 0 0 -12 Z" fill-rule="evenodd" /></symbol>
+      <symbol id="a-p" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="4" rx="2" /></symbol>
+      <symbol id="a-v" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5" /><circle cx="12" cy="12" r="2.5" /><circle cx="19" cy="12" r="2.5" /></symbol>
+    </svg>
+
+    <header class="app-header">
+      <h1 class="app-header__title">
+        <img
+          src="./assets/img/roguefinder.png"
+          alt="RogueFinder"
+          class="app-header__logo"
+          width="2850"
+          height="782"
+          decoding="async"
+        />
+      </h1>
+    </header>
+
+    <main id="app"></main>
+
+    <footer class="app-footer">
+      <p>
+        Pathfinder Second Edition feats data used under the
+        <a
+          href="https://downloads.paizo.com/ORC_LicenseFINAL.pdf"
+          rel="external noopener"
+          target="_blank"
+          >ORC License</a
+        >
+        from Paizo Inc. Data adapted from the
+        <a
+          href="https://github.com/foundryvtt/pf2e"
+          rel="external noopener"
+          target="_blank"
+          >Foundry VTT PF2e module</a
+        >. See <code>NOTICES</code> in the repo for full attribution.
+      </p>
+      <p class="data-version" data-version="9f1b6d2d">Data version: 9f1b6d2d (Foundry @4cbdaa37)</p>
+      <p class="app-footer__credit">
+        A
+        <a
+          href="./rat-on-a-stick.html"
+          target="_blank"
+          rel="noopener"
+          >Rat on a Stick</a
+        >
+        production.
+      </p>
+    </footer>
+  </body>
+</html>

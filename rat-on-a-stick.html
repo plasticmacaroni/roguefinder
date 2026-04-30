@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rat on a Stick Productions</title>
+    <meta
+      name="description"
+      content="Rat on a Stick Productions — a meme."
+    />
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #0a0910;
+        color: #ece9f5;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+      }
+
+      .stage {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        /* Above the closeup bg (z-1) and the center wrap (z-2) so flying
+           gifs are NEVER occluded by either. */
+        z-index: 3;
+      }
+
+      /* Full-screen closeup background — sits behind everything. The image
+         is mildly blurred + scaled so its low resolution doesn't show on
+         wide displays. Ken-Burns animation pans + zooms the bitmap; the
+         opacity wave hides the seam between closeups. */
+      .closeup-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .closeup-bg__img {
+        position: absolute;
+        inset: 0;
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        opacity: 0;
+        will-change: opacity, transform;
+        transition: opacity 1.5s ease;
+      }
+      /* Vignette on top of the closeup so the periphery recedes into the
+         page background. */
+      .closeup-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse at center, transparent 35%, rgba(8, 6, 16, 0.55) 78%, rgba(8, 6, 16, 0.92) 100%);
+        pointer-events: none;
+      }
+
+      .title {
+        position: absolute;
+        top: 1.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        font: 800 clamp(1.1rem, 3vw, 2rem)/1 var(--font-sans);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #f6f3ff;
+        text-shadow: 0 0 14px #4169e1, 0 1px 0 rgba(0,0,0,0.5);
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      .back {
+        position: absolute;
+        top: 1.25rem;
+        left: 1.25rem;
+        z-index: 6;
+        color: #ece9f5;
+        background: rgba(20, 19, 28, 0.7);
+        border: 1px solid #2a2839;
+        border-radius: 999px;
+        padding: 0.4rem 0.9rem;
+        text-decoration: none;
+        font-size: 0.85rem;
+        backdrop-filter: blur(2px);
+      }
+      .back:hover { background: rgba(31, 29, 43, 0.9); }
+
+      .audio-toggle {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        z-index: 6;
+        background: rgba(20, 19, 28, 0.7);
+        border: 1px solid #2a2839;
+        border-radius: 999px;
+        padding: 0.4rem 0.9rem;
+        cursor: pointer;
+        color: #ece9f5;
+        font: 600 0.8rem/1 inherit;
+        backdrop-filter: blur(2px);
+      }
+      .audio-toggle:hover { background: rgba(31, 29, 43, 0.9); }
+
+      /* Center pulsing rat — pulse + slow turn live in CSS so JS only owns
+         the random "filter" effect cycle. */
+      .center-wrap {
+        position: fixed;
+        top: 0;
+        left: 0;
+        /* JS (dvd-bounce) owns the translate3d on this element. The inner
+           img's CSS animations control scale + rotate independently so the
+           two transforms don't fight. */
+        /* Below the flying-gif stage (z-3) so the center never covers a
+           passing fly. */
+        z-index: 2;
+        pointer-events: none;
+        will-change: transform;
+      }
+      .center {
+        display: block;
+        width: clamp(220px, 32vw, 460px);
+        height: auto;
+        animation:
+          rat-pulse 1.4s ease-in-out infinite,
+          rat-turn 7s ease-in-out infinite;
+        transform-origin: center;
+        will-change: transform, filter;
+        transition: filter 0.4s ease;
+      }
+      @keyframes rat-pulse {
+        0%, 100% { transform: scale(1)    rotate(var(--rat-rot, 0deg)); }
+        50%      { transform: scale(1.07) rotate(var(--rat-rot, 0deg)); }
+      }
+      @keyframes rat-turn {
+        0%   { --rat-rot:  -8deg; }
+        25%  { --rat-rot:   5deg; }
+        50%  { --rat-rot: -12deg; }
+        75%  { --rat-rot:   9deg; }
+        100% { --rat-rot:  -8deg; }
+      }
+      /* Trick to actually animate a custom property: register it. */
+      @property --rat-rot {
+        syntax: "<angle>";
+        inherits: true;
+        initial-value: 0deg;
+      }
+
+      .rat-fly {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: clamp(90px, 12vw, 180px);
+        height: auto;
+        z-index: 3;
+        pointer-events: none;
+        will-change: transform;
+        filter: drop-shadow(0 6px 14px rgba(0,0,0,0.6));
+      }
+
+      /* CTA sits above the gifs, below the center rat. */
+      .cta {
+        position: absolute;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 6;
+        font: 600 0.75rem/1.4 inherit;
+        color: #8a849a;
+        background: rgba(20, 19, 28, 0.6);
+        border: 1px dashed #2a2839;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.9rem;
+        max-width: 32rem;
+        text-align: center;
+        backdrop-filter: blur(2px);
+      }
+      .cta strong { color: #ece9f5; }
+
+      /* Pre-enter splash: static rat + "click to eat" prompt. */
+      .gate {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        background: #0a0910;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        cursor: default;
+      }
+      .gate[hidden] { display: none; }
+      .gate__rat {
+        width: clamp(220px, 32vw, 460px);
+        height: auto;
+        cursor: pointer;
+        border-radius: 0.75rem;
+        transition: transform 0.16s ease, filter 0.16s ease;
+        filter: drop-shadow(0 0 26px rgba(65, 105, 225, 0.45));
+      }
+      .gate__rat:hover {
+        transform: scale(1.04);
+        filter: drop-shadow(0 0 36px rgba(65, 105, 225, 0.7));
+      }
+      .gate__rat:active { transform: scale(0.97); }
+      .gate__prompt {
+        margin: 0;
+        font: 700 clamp(1rem, 2.4vw, 1.5rem)/1.2 inherit;
+        letter-spacing: 0.04em;
+        color: #ece9f5;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="gate" id="gate">
+      <img
+        class="gate__rat"
+        id="gateRat"
+        src="./assets/rat/center.jpg"
+        alt="A rat on a stick. Click to eat."
+      />
+      <p class="gate__prompt">click on the rat to eat it</p>
+    </div>
+
+    <a class="back" href="./index.html">← Back to RogueFinder</a>
+
+    <h1 class="title">Rat on a Stick Productions</h1>
+
+    <button class="audio-toggle" id="audioToggle" type="button" aria-label="Mute/unmute audio">🔊 mute</button>
+
+    <div class="closeup-bg" aria-hidden="true">
+      <div class="closeup-bg__img" id="closeupA"></div>
+      <div class="closeup-bg__img" id="closeupB"></div>
+    </div>
+
+    <div class="stage" id="stage" aria-hidden="true"></div>
+
+    <div class="center-wrap">
+      <img class="center" id="centerRat" src="./assets/rat/center.jpg" alt="Rat on a stick" />
+    </div>
+
+    <p class="cta">A <strong>Rat on a Stick Productions</strong> joint. No rats were harmed except the ones that were deep fried alive and then eaten.</p>
+
+    <audio id="audio" src="./assets/rat/audio.mp3" loop preload="auto"></audio>
+
+    <script type="module" src="./js/rat-on-a-stick.js"></script>
+  </body>
+</html>

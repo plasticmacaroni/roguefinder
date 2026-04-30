@@ -2142,6 +2142,43 @@
   box-shadow: 0 0 0 3px var(--rarity-rare-glow);
 }
 .search-bar__input::placeholder { color: var(--fg-dim); }
+/* Suppress the WebKit-default search clear "x" — we render our own button
+   so the affordance is consistent with the filter "Clear" controls and
+   visible across browsers (Firefox doesn't render the native X at all). */
+.search-bar__input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-bar__clear {
+  appearance: none;
+  background: var(--bg-2);
+  color: var(--fg-muted);
+  border: 1px solid var(--bg-3);
+  border-radius: 999px;
+  width: 1.65rem;
+  height: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--ease),
+              border-color var(--motion-fast) var(--ease),
+              background var(--motion-fast) var(--ease);
+}
+.search-bar__clear:hover {
+  color: var(--fg);
+  border-color: var(--rarity-rare);
+  background: var(--bg-3);
+}
+.search-bar__clear:focus-visible {
+  outline: none;
+  border-color: var(--rarity-rare);
+  box-shadow: 0 0 0 3px var(--rarity-rare-glow);
+}
+.search-bar__clear[hidden] { display: none; }
 
 .pool-indicator {
   text-align: center;

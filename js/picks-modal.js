@@ -12,7 +12,7 @@
 
 import { el, clearChildren } from "./util/dom.js";
 import { store, setPick, KNOWN_CLASSES, computeAutoBuildFor, deriveRolloptions } from "./state.js";
-import { renderFeatTitle, renderFeatBody } from "./detail.js";
+import { renderFeatTitle, renderFeatBody, openDetail } from "./detail.js";
 import { startChoiceMusic, stopChoiceMusic } from "./audio.js";
 import { evalPredicate } from "./predicate.js";
 
@@ -473,8 +473,24 @@ function renderOptionPreview(chosenSlug, featId, kind, byId) {
         el(
           "li",
           { class: "picks-cascade-option__preview-item", dataset: { rarity: f.rarity } },
-          f.name,
-          el("span", { class: "picks-cascade-option__preview-level" }, ` (L${f.level})`),
+          // Inline inspect button — opens the detail dialog for this
+          // pulled feat without committing the parent option pick.
+          // stopPropagation keeps the outer option button from firing.
+          el(
+            "button",
+            {
+              type: "button",
+              class: "picks-cascade-option__preview-inspect",
+              title: `Inspect ${f.name}`,
+              onclick: (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openDetail(f);
+              },
+            },
+            f.name,
+            el("span", { class: "picks-cascade-option__preview-level" }, ` (L${f.level})`),
+          ),
         ),
       ),
     ),

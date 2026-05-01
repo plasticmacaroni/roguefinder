@@ -774,6 +774,26 @@
 .picks-cascade-option__preview-level {
   color: var(--fg-muted);
 }
+/* Inline inspect button inside a preview-item — looks like the text it
+   replaces but reveals as clickable on hover. Keeps the outer option
+   button's hit area working for picks; only this small inset opens
+   the detail modal. */
+.picks-cascade-option__preview-inspect {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+.picks-cascade-option__preview-inspect:hover,
+.picks-cascade-option__preview-inspect:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
 
 .detail-free-preview {
   margin: 0 0 var(--space-4);

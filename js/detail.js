@@ -514,29 +514,18 @@ function renderFreeFeatPreview(feat, chosenOrSlug, chosenClassSlug) {
     if (b === "Other") return -1;
     return a.localeCompare(b);
   });
+  // Render via the same pill + type-group machinery as the live Auto-
+  // applies section above (renderAutoAppliesInfo) and the Free Feats
+  // panel — single source of truth for "list of pulled-in feats", so
+  // pills get the familiar rarity tint, ⓘ inspect button, and grouping.
   const groups = sortedKeys.map((bucket) => {
-    const list = byBucket.get(bucket)
-      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
-    return el(
-      "div",
-      { class: "detail-free-preview__group", dataset: { bucket } },
-      el("h5", { class: "detail-free-preview__group-title" }, `${bucket} (${list.length})`),
-      el(
-        "ul",
-        { class: "detail-free-preview__list" },
-        list.map((f) =>
-          el(
-            "li",
-            { class: "detail-free-preview__item", dataset: { rarity: f.rarity } },
-            f.name,
-            el("span", { class: "detail-free-preview__level" }, ` (L${f.level})`),
-          ),
-        ),
-      ),
-    );
+    const pills = byBucket.get(bucket)
+      .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
+      .map((f) => renderPill(f, { auto: true }));
+    return renderTypeGroup(bucket, pills, { bucket });
   });
 
-  return el(
+  const wrapper = el(
     "div",
     { class: "detail-free-preview" },
     el(
@@ -546,6 +535,21 @@ function renderFreeFeatPreview(feat, chosenOrSlug, chosenClassSlug) {
     ),
     ...groups,
   );
+  // Same click-handling pattern as renderAutoAppliesInfo: stop pill body
+  // clicks from bubbling to any wrapping bloom / cascade card, and route
+  // the pill's ⓘ button to navigate (if we're inside the detail dialog)
+  // or open a fresh detail modal (if rendered elsewhere).
+  wrapper.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const expand = e.target.closest('[data-action="expand"]');
+    if (!expand) return;
+    e.preventDefault();
+    const target = data?.byId.get(expand.dataset.featId);
+    if (!target) return;
+    if (dialog && dialog.open) navigateTo(target);
+    else openDetail(target);
+  });
+  return wrapper;
 }
 
 // Replace feat-name occurrences in `prereq_text` with rarity-tinted mini

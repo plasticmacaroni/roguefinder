@@ -13,6 +13,7 @@
 import { el, clearChildren } from "./util/dom.js";
 import { store, setPick, KNOWN_CLASSES, computeAutoBuildFor, deriveRolloptions } from "./state.js";
 import { renderFeatTitle, renderFeatBody, openDetail } from "./detail.js";
+import { renderPill } from "./pill.js";
 import { startChoiceMusic, stopChoiceMusic } from "./audio.js";
 import { evalPredicate } from "./predicate.js";
 
@@ -462,38 +463,39 @@ function renderOptionPreview(chosenSlug, featId, kind, byId) {
     .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
     .slice(0, 12);
 
+  // Reuse the regular pill renderer (auto = read-only variant — no toggle
+  // affordance, ⓘ still opens detail). Wrap in a div with a click handler
+  // that intercepts ⓘ presses for openDetail and swallows the rest so
+  // the outer cascade option's pick action doesn't fire on pill clicks.
+  const pillsWrap = el(
+    "div",
+    {
+      class: "picks-cascade-option__preview-pills",
+      onclick: (e) => {
+        const expand = e.target.closest('[data-action="expand"]');
+        if (expand) {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = expand.getAttribute("data-feat-id");
+          const f = id ? byId.get(id) : null;
+          if (f) openDetail(f);
+          return;
+        }
+        // Any other click on a pill body: swallow so the outer option
+        // button doesn't auto-pick. Pills are read-only in this context.
+        if (e.target.closest(".pill")) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+    },
+    items.map((f) => renderPill(f, { auto: true })),
+  );
   return el(
     "div",
     { class: "picks-cascade-option__preview" },
     el("span", { class: "picks-cascade-option__preview-label" }, "Pulls in:"),
-    el(
-      "ul",
-      { class: "picks-cascade-option__preview-list" },
-      items.map((f) =>
-        el(
-          "li",
-          { class: "picks-cascade-option__preview-item", dataset: { rarity: f.rarity } },
-          // Inline inspect button — opens the detail dialog for this
-          // pulled feat without committing the parent option pick.
-          // stopPropagation keeps the outer option button from firing.
-          el(
-            "button",
-            {
-              type: "button",
-              class: "picks-cascade-option__preview-inspect",
-              title: `Inspect ${f.name}`,
-              onclick: (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                openDetail(f);
-              },
-            },
-            f.name,
-            el("span", { class: "picks-cascade-option__preview-level" }, ` (L${f.level})`),
-          ),
-        ),
-      ),
-    ),
+    pillsWrap,
   );
 }
 

@@ -149,15 +149,12 @@ function buildIndices(arr, classFeaturesArr, ancestriesArr, heritagesArr, i18nOb
     heritagesById.set(h.id, h);
     push(byType, h.type, h.id);
     if (h.class) push(byClass, h.class, h.id);
-    // Versatile heritages tag themselves with their slug as a trait
-    // (Naari has trait "naari"). Build the trait→heritage lookup so a
-    // feat carrying that trait can resolve back to its source heritage.
-    for (const t of h.traits ?? []) {
-      const lc = String(t).toLowerCase();
-      if (lc === h.id && !heritageByTrait.has(lc)) {
-        heritageByTrait.set(lc, h.id);
-      }
-    }
+    // Map every versatile heritage's slug to itself so a feat carrying
+    // that trait can resolve back. Foundry feats use the heritage slug
+    // as their access trait (e.g. Heat Wave has trait `naari`,
+    // Bloodsoaked Dash has trait `hungerseed`) — even when the heritage
+    // record's own self-trait differs (Hungerseed's traits is `["oni"]`).
+    if (h.isVersatile) heritageByTrait.set(h.id, h.id);
   }
 
   // Ancestry roots layered on top. Slug collisions dropped at build time;

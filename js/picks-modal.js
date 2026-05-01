@@ -49,6 +49,31 @@ export function findUnresolvedPicks(build, picks, autoBuild, dataOrById) {
     const ids = autoBuild instanceof Map ? autoBuild.keys() : autoBuild;
     for (const id of ids) scanIds.add(id);
   }
+  // Shared helper: emit a {featId, kind, options} entry from a list of
+  // candidate slugs when 2+ are available and none are already owned.
+  // Used by every "pick one of N" branch — multi-class, multi-heritage,
+  // requires.any — so the modal renders identically across all three.
+  const emitPickerEntry = (featId, kind, parentName, slugs, labelFn) => {
+    const candidates = slugs.filter((s) => byId.get(s));
+    if (candidates.length < 2) return;
+    if (candidates.some((slug) => owned.has(slug))) return;
+    out.push({
+      featId,
+      kind,
+      parentName,
+      options: candidates.map((slug) => {
+        const opt = byId.get(slug);
+        return {
+          slug,
+          name: opt?.name ?? slug,
+          level: opt?.level ?? 0,
+          rarity: opt?.rarity ?? "common",
+          label: labelFn ? labelFn(slug, opt) : (opt?.name ?? slug),
+        };
+      }),
+    });
+  };
+
   for (const featId of scanIds) {
     const f = byId.get(featId);
     if (!f) continue;
@@ -58,28 +83,14 @@ export function findUnresolvedPicks(build, picks, autoBuild, dataOrById) {
       .map((t) => String(t).toLowerCase())
       .filter((t) => KNOWN_CLASSES.has(t));
     if (classTraits.length >= 2 && !featPicks.class) {
-      const candidates = classTraits
-        .map((t) => `${t}-dedication`)
-        .filter((slug) => byId.get(slug));
-      const alreadyResolved = candidates.some((slug) => owned.has(slug));
-      if (!alreadyResolved && candidates.length >= 2) {
-        out.push({
-          featId,
-          kind: "class",
-          parentName: f.name,
-          options: candidates.map((slug) => {
-            const opt = byId.get(slug);
-            const trait = slug.replace(/-dedication$/, "");
-            return {
-              slug,
-              name: opt.name,
-              level: opt.level,
-              rarity: opt.rarity,
-              label: trait.charAt(0).toUpperCase() + trait.slice(1),
-            };
-          }),
-        });
-      }
+      emitPickerEntry(
+        featId, "class", f.name,
+        classTraits.map((t) => `${t}-dedication`),
+        (slug) => {
+          const trait = slug.replace(/-dedication$/, "");
+          return trait.charAt(0).toUpperCase() + trait.slice(1);
+        },
+      );
     }
     // --- multi-heritage-trait branch ---
     // Feats from versatile heritages can carry multiple heritage traits
@@ -94,47 +105,12 @@ export function findUnresolvedPicks(build, picks, autoBuild, dataOrById) {
         if (hid && !heritageMatches.includes(hid)) heritageMatches.push(hid);
       }
       if (heritageMatches.length >= 2) {
-        const alreadyResolved = heritageMatches.some((slug) => owned.has(slug));
-        if (!alreadyResolved) {
-          out.push({
-            featId,
-            kind: "heritage",
-            parentName: f.name,
-            options: heritageMatches.map((slug) => {
-              const opt = byId.get(slug);
-              return {
-                slug,
-                name: opt?.name ?? slug,
-                level: opt?.level ?? 0,
-                rarity: opt?.rarity ?? "common",
-                label: opt?.name ?? slug,
-              };
-            }),
-          });
-        }
+        emitPickerEntry(featId, "heritage", f.name, heritageMatches);
       }
     }
     // --- requires.any branch ---
-    const anyOptions = (f.requires?.any ?? []).filter((slug) => byId.get(slug));
-    if (anyOptions.length >= 2 && !featPicks.or) {
-      const alreadyResolved = anyOptions.some((slug) => owned.has(slug));
-      if (!alreadyResolved) {
-        out.push({
-          featId,
-          kind: "or",
-          parentName: f.name,
-          options: anyOptions.map((slug) => {
-            const opt = byId.get(slug);
-            return {
-              slug,
-              name: opt.name,
-              level: opt.level,
-              rarity: opt.rarity,
-              label: opt.name,
-            };
-          }),
-        });
-      }
+    if ((f.requires?.any ?? []).length >= 2 && !featPicks.or) {
+      emitPickerEntry(featId, "or", f.name, f.requires.any);
     }
     // --- Foundry ChoiceSet branch ---
     // Each ChoiceSet rule on the feat (resolved at build time into

@@ -7,7 +7,7 @@
 // `classFeaturesById` (for the Free Feats UI), but they are NOT in the
 // canonical `feats` array — share-code indices stay stable.
 
-const TYPE_ORDER = ["Class", "Ancestry", "Archetype", "General", "Skill", "Boon", "Curse", "Miscellaneous", "Mythic"];
+const TYPE_ORDER = ["Class", "Ancestry", "Heritage", "Archetype", "General", "Skill", "Boon", "Curse", "Miscellaneous", "Mythic"];
 
 export async function loadFeats() {
   const node = document.getElementById("feats-data");
@@ -48,6 +48,21 @@ export async function loadFeats() {
     }
   }
 
+  // Heritages (also optional, same pattern). Includes both ancestry-specific
+  // and versatile heritages. Walker pulls the parent ancestry when a
+  // non-versatile heritage lands in build.
+  const hNode = document.getElementById("heritages-data");
+  let heritagesArr = [];
+  if (hNode && hNode.dataset.src) {
+    try {
+      const hRes = await fetch(hNode.dataset.src);
+      if (hRes.ok) heritagesArr = await hRes.json();
+      else console.warn(`heritages fetch failed: HTTP ${hRes.status}`);
+    } catch (err) {
+      console.warn("heritages load failed:", err);
+    }
+  }
+
   // i18n subset for Foundry ChoiceSet prompts and labels. Optional — runtime
   // falls back to a heuristic strip-and-titlecase when keys are missing.
   const i18nNode = document.getElementById("i18n-data");
@@ -62,7 +77,7 @@ export async function loadFeats() {
     }
   }
 
-  return buildIndices(arr, classFeaturesArr, ancestriesArr, i18nObj);
+  return buildIndices(arr, classFeaturesArr, ancestriesArr, heritagesArr, i18nObj);
 }
 
 // Resolve a Foundry i18n key (e.g. "PF2E.Terrain.Aquatic") to a string.
@@ -81,10 +96,11 @@ export function makeTranslate(i18nObj) {
   };
 }
 
-function buildIndices(arr, classFeaturesArr, ancestriesArr, i18nObj) {
+function buildIndices(arr, classFeaturesArr, ancestriesArr, heritagesArr, i18nObj) {
   const feats = Object.freeze(arr.map(Object.freeze));
   const classFeatures = Object.freeze(classFeaturesArr.map(Object.freeze));
   const ancestries = Object.freeze((ancestriesArr || []).map(Object.freeze));
+  const heritages = Object.freeze((heritagesArr || []).map(Object.freeze));
   const i18n = Object.freeze(i18nObj || {});
   const translate = makeTranslate(i18n);
 
@@ -95,6 +111,7 @@ function buildIndices(arr, classFeaturesArr, ancestriesArr, i18nObj) {
   const byClass = new Map(); // ClassName -> id[]
   const classFeaturesById = new Map();
   const ancestriesById = new Map();
+  const heritagesById = new Map();
   // Lowercase ancestry trait → ancestry root id. Walker uses this to
   // auto-pull "Halfling" when picking a feat with `halfling` trait.
   const ancestryByTrait = new Map();
@@ -115,6 +132,17 @@ function buildIndices(arr, classFeaturesArr, ancestriesArr, i18nObj) {
     if (byId.has(cf.id)) continue;
     byId.set(cf.id, cf);
     classFeaturesById.set(cf.id, cf);
+  }
+
+  // Heritages layered on top — both ancestry-specific (Gutsy Halfling)
+  // and versatile (Naari, Sylph, Aiuvarin, …). Walker auto-pulls the
+  // parent ancestry when a non-versatile heritage lands in build.
+  for (const h of heritages) {
+    if (byId.has(h.id)) continue;
+    byId.set(h.id, h);
+    heritagesById.set(h.id, h);
+    push(byType, h.type, h.id);
+    if (h.class) push(byClass, h.class, h.id);
   }
 
   // Ancestry roots layered on top. Slug collisions dropped at build time;
@@ -171,6 +199,7 @@ function buildIndices(arr, classFeaturesArr, ancestriesArr, i18nObj) {
     byClass,
     classFeaturesById,
     ancestriesById,
+    heritagesById,
     ancestryByTrait,
     i18n,
     translate,

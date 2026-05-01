@@ -109,15 +109,37 @@ export function renderBuildSummary(parent, data) {
     }
     headBreakdown.textContent = breakdownText;
 
-    // Body: per-type sub-lists with pills.
+    // Body: per-type sub-lists with pills. Heritages get an extra layer
+    // of sub-bucketing (Versatile vs each parent ancestry) since they're
+    // best read grouped by lineage.
     clearChildren(body);
     for (const t of data.typeOrder) {
       const list = byType.get(t);
       if (!list?.length) continue;
-      const pills = list
-        .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
-        .map((f) => renderPill(f, { selected: true }));
-      body.appendChild(renderTypeGroup(t, pills, { type: t }));
+      const sorted = list.sort(
+        (a, b) => a.level - b.level || a.name.localeCompare(b.name),
+      );
+      if (t === "Heritage") {
+        const subBuckets = new Map();
+        for (const h of sorted) {
+          const key = h.class || "Versatile";
+          if (!subBuckets.has(key)) subBuckets.set(key, []);
+          subBuckets.get(key).push(h);
+        }
+        // Versatile group first, then ancestries A→Z.
+        const orderedKeys = [...subBuckets.keys()].sort((a, b) => {
+          if (a === "Versatile") return -1;
+          if (b === "Versatile") return 1;
+          return a.localeCompare(b);
+        });
+        for (const key of orderedKeys) {
+          const pills = subBuckets.get(key).map((f) => renderPill(f, { selected: true }));
+          body.appendChild(renderTypeGroup(`Heritage — ${key}`, pills, { type: t, subgroup: key }));
+        }
+      } else {
+        const pills = sorted.map((f) => renderPill(f, { selected: true }));
+        body.appendChild(renderTypeGroup(t, pills, { type: t }));
+      }
     }
   }
 

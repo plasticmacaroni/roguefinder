@@ -255,6 +255,13 @@ export function computeAutoBuildFor(
         tryAdd(ancestryTraits[0], sourceId);
       }
     }
+    // (g) heritage → parent ancestry. Non-versatile heritages carry an
+    // `ancestry` slug; pulling the parent ancestry root means the build
+    // reads end-to-end without forcing the user to add the ancestry
+    // separately. Versatile heritages (ancestry === null) stand alone.
+    if (item.type === "Heritage" && item.ancestry) {
+      tryAdd(item.ancestry, sourceId);
+    }
   }
 
   // Pass 2: bucket per source-component.

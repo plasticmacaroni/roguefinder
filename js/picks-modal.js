@@ -20,8 +20,13 @@ import { evalPredicate } from "./predicate.js";
 // Returns [{ featId, kind: "class"|"or", options: Array<{slug, name, level, rarity, label}> }]
 // Multi-class is class kind. requires.any is or kind. A feat may produce
 // up to two entries (one per kind) if BOTH need a pick.
-export function findUnresolvedPicks(build, picks, autoBuild, byId) {
+export function findUnresolvedPicks(build, picks, autoBuild, dataOrById) {
   const out = [];
+  // 4th arg may be either the full data object (preferred — gives us
+  // heritageByTrait too) or a bare byId Map (legacy callers / tests).
+  const isFullData = dataOrById && typeof dataOrById === "object" && dataOrById.byId;
+  const byId = isFullData ? dataOrById.byId : dataOrById;
+  const heritageByTrait = isFullData ? dataOrById.heritageByTrait : null;
   if (!byId) return out;
   const owned = new Set(build);
   if (autoBuild) {
@@ -74,6 +79,39 @@ export function findUnresolvedPicks(build, picks, autoBuild, byId) {
             };
           }),
         });
+      }
+    }
+    // --- multi-heritage-trait branch ---
+    // Feats from versatile heritages can carry multiple heritage traits
+    // (the Geniekin family has 7 elemental traits — having ANY ONE of
+    // those heritages grants access). Same shape as the multi-class
+    // branch: prompt the user to pick which heritage they have.
+    if (heritageByTrait && !featPicks.heritage) {
+      const heritageMatches = [];
+      for (const t of f.traits ?? []) {
+        const lc = String(t).toLowerCase();
+        const hid = heritageByTrait.get(lc);
+        if (hid && !heritageMatches.includes(hid)) heritageMatches.push(hid);
+      }
+      if (heritageMatches.length >= 2) {
+        const alreadyResolved = heritageMatches.some((slug) => owned.has(slug));
+        if (!alreadyResolved) {
+          out.push({
+            featId,
+            kind: "heritage",
+            parentName: f.name,
+            options: heritageMatches.map((slug) => {
+              const opt = byId.get(slug);
+              return {
+                slug,
+                name: opt?.name ?? slug,
+                level: opt?.level ?? 0,
+                rarity: opt?.rarity ?? "common",
+                label: opt?.name ?? slug,
+              };
+            }),
+          });
+        }
       }
     }
     // --- requires.any branch ---
@@ -176,6 +214,10 @@ function openOne(item, advance) {
     heading = `Pick a prerequisite path for ${parentName}`;
     why = `${parentName} requires one of several prerequisite feats. Your pick decides which prerequisite chain auto-applies — the others stay out of your build.`;
     optionsHeading = "Choose a prerequisite:";
+  } else if (kind === "heritage") {
+    heading = `Pick a heritage for ${parentName}`;
+    why = `${parentName} is available to multiple versatile heritages. Pick the one you have — the chosen heritage joins your build.`;
+    optionsHeading = "Choose a heritage:";
   } else if (kind === "choice") {
     const promptText = tr(item.choice.prompt) || `Pick a value for ${parentName}`;
     heading = `${promptText} — ${parentName}`;
@@ -478,7 +520,9 @@ export async function checkAndCascade(dataOrById) {
   // against runaway by capping the wave count.
   for (let wave = 0; wave < 32; wave++) {
     const unresolved = findUnresolvedPicks(
-      store.build, store.picks, store.autoBuild, byId,
+      // Pass the full data object so findUnresolvedPicks can read the
+      // heritageByTrait index for the multi-heritage-trait branch.
+      store.build, store.picks, store.autoBuild, dataOrById,
     );
     if (unresolved.length === 0) return;
     for (const u of unresolved) {

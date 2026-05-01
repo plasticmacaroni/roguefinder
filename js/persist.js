@@ -145,6 +145,7 @@ export function loadPicks() {
       const entry = {};
       if (typeof value.class === "string" && value.class) entry.class = value.class;
       if (typeof value.or === "string" && value.or) entry.or = value.or;
+      if (typeof value.heritage === "string" && value.heritage) entry.heritage = value.heritage;
       // Foundry ChoiceSet resolutions: { [choiceId]: value } map per feat.
       if (value.choiceSets && typeof value.choiceSets === "object") {
         const cs = {};
@@ -169,6 +170,7 @@ export const savePicks = debounce((picks) => {
     const entry = {};
     if (value.class) entry.class = value.class;
     if (value.or) entry.or = value.or;
+    if (value.heritage) entry.heritage = value.heritage;
     if (value.choiceSets && typeof value.choiceSets === "object") {
       const cs = {};
       for (const [k, v] of Object.entries(value.choiceSets)) {

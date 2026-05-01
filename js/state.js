@@ -171,6 +171,7 @@ export function computeAutoBuildFor(
     if (featPicks) {
       if (featPicks.class) tryAdd(featPicks.class, sourceId);
       if (featPicks.or) tryAdd(featPicks.or, sourceId);
+      if (featPicks.heritage) tryAdd(featPicks.heritage, sourceId);
       // ChoiceSet resolutions: only feat-yielding values traverse. Tag
       // values (skill, terrain, weapon-type) persist for display but
       // don't pull a chain.
@@ -253,6 +254,23 @@ export function computeAutoBuildFor(
       }
       if (ancestryTraits.length === 1) {
         tryAdd(ancestryTraits[0], sourceId);
+      }
+      // Heritage-trait pull: feats from versatile heritages (Naari, Sylph,
+      // …) carry the heritage's slug as a trait. Single-match → auto-pull
+      // the heritage. Multiple matches (the Geniekin family — `genie-
+      // weapon-familiarity` etc. carry 7 elemental heritage traits) →
+      // defer to the picks-modal heritage picker via picks[id].heritage.
+      const heritageByTrait = _data?.heritageByTrait;
+      if (heritageByTrait) {
+        const heritageMatches = [];
+        for (const t of item.traits ?? []) {
+          const lc = String(t).toLowerCase();
+          const hid = heritageByTrait.get(lc);
+          if (hid) heritageMatches.push(hid);
+        }
+        if (heritageMatches.length === 1) {
+          tryAdd(heritageMatches[0], sourceId);
+        }
       }
     }
     // (g) heritage → parent ancestry. Non-versatile heritages carry an
@@ -347,8 +365,10 @@ subscribe("picks", () => recomputeAutoBuild());
 // --- picks helpers (multi-class + requires.any resolutions per build feat) ---
 
 // Set or clear a single resolution slot.
-//   setPick(featId, "class", slug)  → top-level class pick
-//   setPick(featId, "or",    slug)  → top-level OR-prereq pick
+//   setPick(featId, "class",    slug)  → top-level class pick
+//   setPick(featId, "or",       slug)  → top-level OR-prereq pick
+//   setPick(featId, "heritage", slug)  → top-level heritage pick (when
+//                                        feat has multiple heritage traits)
 //   setPick(featId, "choiceSet", { id, value })  → nested ChoiceSet pick
 // Pass slug / value falsy to clear that slot. Replaces whole picks Map.
 export function setPick(featId, kind, slugOrPayload) {
@@ -356,7 +376,7 @@ export function setPick(featId, kind, slugOrPayload) {
   const next = new Map(store.picks);
   const cur = next.get(featId) ?? {};
   const updated = { ...cur };
-  if (kind === "class" || kind === "or") {
+  if (kind === "class" || kind === "or" || kind === "heritage") {
     if (slugOrPayload) updated[kind] = slugOrPayload;
     else delete updated[kind];
   } else if (kind === "choiceSet") {

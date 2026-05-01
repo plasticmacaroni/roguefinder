@@ -115,6 +115,12 @@ function buildIndices(arr, classFeaturesArr, ancestriesArr, heritagesArr, i18nOb
   // Lowercase ancestry trait → ancestry root id. Walker uses this to
   // auto-pull "Halfling" when picking a feat with `halfling` trait.
   const ancestryByTrait = new Map();
+  // Lowercase versatile-heritage trait → heritage id. Walker uses this
+  // to auto-pull "Naari" when picking a feat with the `naari` trait
+  // (Heat Wave, etc.). Ancestry-bound heritages typically have empty
+  // trait lists; this index ends up containing only versatile heritages
+  // that tag themselves with a self-named trait.
+  const heritageByTrait = new Map();
 
   // Indexable feats first — these own the canonical positions.
   feats.forEach((f, i) => {
@@ -143,6 +149,15 @@ function buildIndices(arr, classFeaturesArr, ancestriesArr, heritagesArr, i18nOb
     heritagesById.set(h.id, h);
     push(byType, h.type, h.id);
     if (h.class) push(byClass, h.class, h.id);
+    // Versatile heritages tag themselves with their slug as a trait
+    // (Naari has trait "naari"). Build the trait→heritage lookup so a
+    // feat carrying that trait can resolve back to its source heritage.
+    for (const t of h.traits ?? []) {
+      const lc = String(t).toLowerCase();
+      if (lc === h.id && !heritageByTrait.has(lc)) {
+        heritageByTrait.set(lc, h.id);
+      }
+    }
   }
 
   // Ancestry roots layered on top. Slug collisions dropped at build time;
@@ -201,6 +216,7 @@ function buildIndices(arr, classFeaturesArr, ancestriesArr, heritagesArr, i18nOb
     ancestriesById,
     heritagesById,
     ancestryByTrait,
+    heritageByTrait,
     i18n,
     translate,
     chains: Object.freeze({ parents, children, roots }),

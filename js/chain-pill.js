@@ -51,9 +51,12 @@ export function renderChainPill(tree, data) {
     title: "Chain",
   });
 
-  // Internal nodes will be filled by syncChainPill.
+  // Internal nodes will be filled by syncChainPill. The legacy marker is
+  // created up-front but starts hidden; sync toggles its hidden flag based
+  // on the active feat's remaster boolean.
   pill.append(
     el("span", { class: "pill__name" }, "…"),
+    el("span", { class: "pill__legacy", hidden: "" }, "[Pre-Remaster]"),
     el("span", { class: "pill__chain-count" }, "0/0"),
     el(
       "button",
@@ -125,6 +128,11 @@ function syncChainPill(pill, data, build) {
   pill.title = `${feat.name} — chain (${owned}/${total})`;
 
   pill.querySelector(".pill__name").textContent = feat.name;
+  // Legacy marker tracks the *active* feat, not the chain root — a chain
+  // can mix legacy + remaster members, and the user cares about the one
+  // currently displayed.
+  const legacy = pill.querySelector(".pill__legacy");
+  if (legacy) legacy.hidden = feat.remaster !== false;
   pill.querySelector(".pill__chain-count").textContent = `${owned}/${total}`;
   pill.classList.toggle("pill--chain-complete", allOwned);
 

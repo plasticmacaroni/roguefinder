@@ -196,12 +196,19 @@ function renderCurrent() {
 // Shared feat title (action glyph + name). Used by detail modal head and by
 // bloom popup cards so titles look identical.
 export function renderFeatTitle(feat) {
+  // Pre-Remaster marker — separate span so CSS can size/colour it
+  // independently of the name. Same shape as pill.js / chain-pill.js.
+  const legacy =
+    feat.remaster === false
+      ? el("span", { class: "detail-dialog__name-legacy" }, " [Pre-Remaster]")
+      : null;
   return el(
     "h2",
     { class: "detail-dialog__name" },
     renderActionGlyph(feat.actions),
     " ",
     feat.name,
+    legacy,
   );
 }
 
@@ -265,18 +272,16 @@ export function renderFeatBody(feat, { interactive = true, suppressPickers = fal
   description.innerHTML =
     feat.description || "<p><em>No description.</em></p>";
 
-  // Foundry tags pre-Remaster items via publication.remaster=false; the
-  // build lifts that into feat.remaster. Surface a "(Legacy)" suffix so the
-  // user can tell when a feat predates Player Core / ORC and may have a
-  // dropped or renamed prereq target. Default-true records show no suffix.
+  // Pre-Remaster suffix on the source line too — title carries the visible
+  // [Pre-Remaster] tag, this gives the canonical attribution context.
   const sourceLabel = feat.source || "Source unknown";
-  const legacyLabel =
-    feat.remaster === false ? `${sourceLabel} (Legacy)` : sourceLabel;
+  const sourceText =
+    feat.remaster === false ? `${sourceLabel} [Pre-Remaster]` : sourceLabel;
 
   const source = el(
     "div",
     { class: "detail-source" },
-    el("span", { dataset: { remaster: String(feat.remaster !== false) } }, legacyLabel),
+    el("span", { dataset: { remaster: String(feat.remaster !== false) } }, sourceText),
     feat.url
       ? el(
           "a",

@@ -59,6 +59,14 @@ export function renderPill(feat, { selected = false, locked = false, auto = fals
         : feat.name,
   };
   const children = [el("span", { class: "pill__name" }, displayName)];
+  // Pre-Remaster marker. Foundry tags legacy items via publication.remaster=
+  // false; the build lifts that into feat.remaster. Separate span so CSS can
+  // shrink/dim/wrap it independently of the name without re-touching JS.
+  if (feat.remaster === false) {
+    children.push(
+      el("span", { class: "pill__legacy" }, "[Pre-Remaster]"),
+    );
+  }
   // Locked feats with literal prereq prose surface that prose inline so the
   // user sees "X or Y" right on the pill instead of having to expand it.
   if (locked && feat.prereq_text) {

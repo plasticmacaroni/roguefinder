@@ -131,7 +131,9 @@ export function findUnresolvedPicks(build, picks, autoBuild, dataOrById) {
       if (choice.kind !== "freetext" && opts.length === 0) continue;
       // Skip when the user already owns one of the feat-yielding options
       // (treat as de-facto resolved — same convention as the class/or paths).
-      const alreadyOwned = opts.some(
+      // Gate on grantsResult: when the choice doesn't grant the picked value,
+      // ownership is irrelevant — picking again won't double-add anything.
+      const alreadyOwned = choice.grantsResult && opts.some(
         (o) => o.yieldsFeat && owned.has(o.value),
       );
       if (alreadyOwned) continue;
@@ -320,9 +322,12 @@ function renderChoiceOptions(item, byId, tr, onAfterPick) {
     );
   }
 
-  if (opts.some((o) => o.yieldsFeat)) {
+  if (choice.grantsResult && opts.some((o) => o.yieldsFeat)) {
     // Feat-yielding choice — render each option as a clickable feat card.
     // Reuses the bloom selection card structure: same renderFeatBody output.
+    // Cards only when the pick actually mutates the build (grantsResult).
+    // Otherwise option-id collisions with real items (Automaton size →
+    // Animist's "Medium" CF) leak misleading cards.
     const cards = opts
       .filter((o) => o.yieldsFeat)
       .map((opt) => {

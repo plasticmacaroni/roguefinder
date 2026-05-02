@@ -65,13 +65,19 @@
   white-space: nowrap;
 }
 
-/* Pre-Remaster marker. Sized down + dimmed so it reads as secondary tag
-   next to the name. Truncates with ellipsis on tight pills rather than
-   pushing the expand button off-screen. */
+/* Pre-Remaster marker. Smaller than the name but inherits the pill's
+   color so it stays legible on the rarity-fill background of selected
+   pills (where var(--fg-muted) would vanish). Baseline-aligned so it
+   reads even with the name rather than floating mid-height. Truncates
+   with ellipsis on tight pills rather than pushing the ⓘ off-screen. */
 .pill__legacy {
   flex: 0 1 auto;
-  margin-left: var(--space-2);
-  color: var(--fg-muted);
+  align-self: baseline;
+  /* Negative margin cancels most of the parent .pill flex `gap` so the
+     marker hugs the name instead of floating with the same spacing as
+     the ⓘ button. Net horizontal gap ends up ~2px. */
+  margin-left: calc(-1 * var(--space-2) + 0.125rem);
+  color: currentColor;
   font: 600 0.7em/1.1 var(--font-sans);
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -431,15 +437,16 @@
   font: 700 1.4rem/1.2 var(--font-sans);
   flex: 1;
 }
-/* Pre-Remaster marker on the detail title — smaller, dimmed, italic so it
-   doesn't compete with the feat name. Same data signal as .pill__legacy. */
+/* Pre-Remaster marker on the detail title — smaller but inherits the
+   title's color so it stays legible on any background. Baseline-aligned
+   so it reads even with the feat name. Same data signal as .pill__legacy. */
 .detail-dialog__name-legacy {
   font: 600 0.6em/1.1 var(--font-sans);
-  color: var(--fg-muted);
+  color: currentColor;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  margin-left: var(--space-2);
-  vertical-align: middle;
+  margin-left: 0.25rem;
+  vertical-align: baseline;
 }
 .detail-dialog__close {
   flex: 0 0 auto;
